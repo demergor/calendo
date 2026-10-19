@@ -1,4 +1,13 @@
-use std::{io, mem::MaybeUninit};
+use std::{
+    io::{
+        self,
+        Write
+    },
+    mem::MaybeUninit
+};
+
+const ENTER_ALT_SCREEN: &str = "\x1b[?1049h";
+const LEAVE_ALT_SCREEN: &str = "\x1b[?1049l";
 
 struct Terminal {
     width: u16,
@@ -10,7 +19,10 @@ impl Terminal {
     pub fn new() -> Result<Terminal, TermPrepError> {
         let (width, height) = term_dimensions()?;
         let og_termios = term_attrs()?;
-        let raw = og_termios.clone();
+        let mut raw = og_termios.clone();
+
+        unsafe { libc::cfmakeraw(&mut raw) };
+        std::io::stdout().write_all(ENTER_ALT_SCREEN.as_bytes());
 
         Ok(Terminal {
             width,
@@ -23,6 +35,7 @@ impl Terminal {
 impl Drop for Terminal {
     fn drop(&mut self) {
         todo!("Implement raw terminal destructor");
+
     }
 }
 
